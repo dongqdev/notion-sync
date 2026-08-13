@@ -708,11 +708,12 @@
         <div class="step">
           <div class="step-num">4</div>
           <div>
-            <h3>휴지통 페이지 ID 설정</h3>
+            <h3>휴지통 페이지 ID 설정 (필수)</h3>
             <p>
               백업으로 쓸 페이지를 하나 만들고 같은 통합에 연결한 다음, 페이지
               URL 끝에 붙은 32자리 ID를 복사합니다. 대시(-)는 있어도 없어도
-              상관없습니다.
+              상관없습니다. 이 값이 없으면 approve-edit·delete·list-trash는
+              API를 호출하지도 않고 바로 에러를 내고 종료합니다.
             </p>
             <code>NOTION_TRASH_PAGE_ID=3b9813eb-7677-8101-a4c1-d67d707c9506</code>
             <p style="margin-top:16px;">완성된 .env 파일은 이렇게 생겼습니다.</p>
