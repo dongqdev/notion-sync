@@ -11,8 +11,21 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
-const TRASH_PAGE_ID = process.env.NOTION_TRASH_PAGE_ID || '3b9813eb-7677-8101-a4c1-d67d707c9506';
+const TRASH_PAGE_ID = process.env.NOTION_TRASH_PAGE_ID || '';
 const RESTORE_REF_PREFIX = '[ref:';
+
+// approve-edit/delete/list-trash all read or write the trash page - refuse
+// to run them against an unset ID instead of failing deep inside a Notion
+// API call with a generic "page not found" error.
+function requireTrashPageId() {
+  if (!TRASH_PAGE_ID) {
+    console.error(
+      'CLI Error: NOTION_TRASH_PAGE_ID가 .env에 설정되어 있지 않습니다.\n' +
+      '휴지통으로 쓸 Notion 페이지를 만들고 통합에 연결한 뒤, .env에 NOTION_TRASH_PAGE_ID를 추가하세요 (README "휴지통 페이지 ID 설정" 참고).'
+    );
+    process.exit(1);
+  }
+}
 
 function getPageTitle(page) {
   if (page.object === 'page') {
@@ -248,6 +261,7 @@ Notion Agent CLI Usage:
 
       console.log(`PROPOSED_EDIT_SUCCESS: Appended proposed revision to "${pageQuery}" (${targetPage.id})`);
     } else if (command === 'approve-edit') {
+      requireTrashPageId();
       const pageQuery = args[1];
       const targetPage = await findPageByTitle(pageQuery);
 
@@ -306,6 +320,7 @@ Notion Agent CLI Usage:
 
       console.log(`SUCCESS: Appended content to "${pageQuery}"`);
     } else if (command === 'delete') {
+      requireTrashPageId();
       const pageQuery = args[1];
       const targetPage = await findPageByTitleExact(pageQuery);
       const title = getPageTitle(targetPage);
@@ -342,6 +357,7 @@ Notion Agent CLI Usage:
 
       console.log(`DELETE_SUCCESS: Archived "${title}" and recorded it in Trash Archive (${trashEntry.url}).`);
     } else if (command === 'list-trash') {
+      requireTrashPageId();
       const blocks = await listAllBlocks(TRASH_PAGE_ID);
       const entries = blocks
         .filter(b => b.type === 'child_page')
