@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "notion-sync-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "notion-sync-pages",
+      "runtimeExecutable": "py",
+      "runtimeArgs": ["-m", "http.server", "8099", "--directory", "docs"],
+      "port": 8099
+    }
+  ]
+}
