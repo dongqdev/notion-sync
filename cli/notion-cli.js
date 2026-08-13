@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import dotenv from 'dotenv';
-import { Client } from '@notionhq/client';
+import { Client, collectPaginatedAPI } from '@notionhq/client';
+import { markdownToNotionBlocks as markdownToBlocks } from '../lib/markdown-to-blocks.js';
 import { createWorker } from 'tesseract.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -23,6 +24,18 @@ function getPageTitle(page) {
     return page.title ? page.title.map(t => t.plain_text).join('') : '';
   }
   return '(제목 없음)';
+}
+
+async function listAllBlocks(blockId) {
+  return collectPaginatedAPI(notion.blocks.children.list, { block_id: blockId, page_size: 100 });
+}
+
+// Notion caps children arrays at 100 blocks per request, so anything longer
+// must be appended in batches or it silently fails/truncates.
+async function appendBlocksInBatches(blockId, blocks) {
+  for (let i = 0; i < blocks.length; i += 100) {
+    await notion.blocks.children.append({ block_id: blockId, children: blocks.slice(i, i + 100) });
+  }
 }
 
 async function findPageByTitle(query) {
@@ -60,59 +73,6 @@ async function findPageByTitleExact(query) {
     );
   }
   return match;
-}
-
-function markdownToBlocks(markdownText) {
-  const lines = markdownText.split('\n');
-  const children = [];
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-
-    if (trimmed.startsWith('# ')) {
-      children.push({
-        object: 'block',
-        type: 'heading_1',
-        heading_1: { rich_text: [{ type: 'text', text: { content: trimmed.slice(2) } }] }
-      });
-    } else if (trimmed.startsWith('## ')) {
-      children.push({
-        object: 'block',
-        type: 'heading_2',
-        heading_2: { rich_text: [{ type: 'text', text: { content: trimmed.slice(3) } }] }
-      });
-    } else if (trimmed.startsWith('### ')) {
-      children.push({
-        object: 'block',
-        type: 'heading_3',
-        heading_3: { rich_text: [{ type: 'text', text: { content: trimmed.slice(4) } }] }
-      });
-    } else if (trimmed.startsWith('> ')) {
-      children.push({
-        object: 'block',
-        type: 'callout',
-        callout: {
-          rich_text: [{ type: 'text', text: { content: trimmed.slice(2) } }],
-          icon: { type: 'emoji', emoji: '💡' }
-        }
-      });
-    } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-      children.push({
-        object: 'block',
-        type: 'bulleted_list_item',
-        bulleted_list_item: { rich_text: [{ type: 'text', text: { content: trimmed.slice(2) } }] }
-      });
-    } else {
-      children.push({
-        object: 'block',
-        type: 'paragraph',
-        paragraph: { rich_text: [{ type: 'text', text: { content: trimmed } }] }
-      });
-    }
-  }
-
-  return children;
 }
 
 function blockText(block) {
@@ -214,8 +174,8 @@ Notion Agent CLI Usage:
       const pageQuery = args[1];
       const targetPage = await findPageByTitle(pageQuery);
 
-      const blocksRes = await notion.blocks.children.list({ block_id: targetPage.id, page_size: 100 });
-      const markdown = blocksToMarkdown(blocksRes.results);
+      const blocks = await listAllBlocks(targetPage.id);
+      const markdown = blocksToMarkdown(blocks);
 
       console.log(`# ${getPageTitle(targetPage)} (${targetPage.id})\n\n${markdown}`);
     } else if (command === 'create') {
@@ -229,14 +189,18 @@ Notion Agent CLI Usage:
 
       const parentPage = await findPageByTitle(parentQuery);
       const isDatabase = parentPage.object === 'database';
+      const contentBlocks = markdownToBlocks(markdownContent);
       const newPage = await notion.pages.create({
         parent: isDatabase ? { database_id: parentPage.id } : { page_id: parentPage.id },
         properties: {
           // Databases conventionally name their title property "Name"; plain pages always use "title".
           [isDatabase ? 'Name' : 'title']: { title: [{ type: 'text', text: { content: title } }] }
         },
-        children: markdownToBlocks(markdownContent)
+        children: contentBlocks.slice(0, 100)
       });
+      if (contentBlocks.length > 100) {
+        await appendBlocksInBatches(newPage.id, contentBlocks.slice(100));
+      }
 
       console.log(`SUCCESS: Created "${title}" under "${parentQuery}" (${newPage.url})`);
     } else if (command === 'add-toggle') {
@@ -280,20 +244,15 @@ Notion Agent CLI Usage:
       };
 
       const revisedBlocks = [bannerBlock, ...markdownToBlocks(revisedMarkdown)];
-
-      await notion.blocks.children.append({
-        block_id: targetPage.id,
-        children: revisedBlocks
-      });
+      await appendBlocksInBatches(targetPage.id, revisedBlocks);
 
       console.log(`PROPOSED_EDIT_SUCCESS: Appended proposed revision to "${pageQuery}" (${targetPage.id})`);
     } else if (command === 'approve-edit') {
       const pageQuery = args[1];
       const targetPage = await findPageByTitle(pageQuery);
 
-      // Fetch all page blocks
-      const blocksRes = await notion.blocks.children.list({ block_id: targetPage.id });
-      const blocks = blocksRes.results;
+      // Fetch all page blocks (paginated, so long articles aren't silently truncated)
+      const blocks = await listAllBlocks(targetPage.id);
 
       // Find banner index
       const bannerIndex = blocks.findIndex(b =>
@@ -310,15 +269,22 @@ Notion Agent CLI Usage:
       const oldBlocks = blocks.slice(0, bannerIndex);
       const dateStr = new Date().toISOString().split('T')[0];
 
-      // Backup old blocks to Trash page (content is copied in, not just a marker page)
+      // Backup old blocks to Trash page (content is copied in, not just a marker page).
+      // Long articles can exceed Notion's 100-block-per-request cap, so the
+      // first 100 go in at create time and the rest are appended after -
+      // otherwise a long original would fail to back up before being deleted below.
+      const sanitizedOldBlocks = oldBlocks.map(sanitizeBlockForCreate);
       const backupPage = await notion.pages.create({
         parent: { page_id: TRASH_PAGE_ID },
         icon: { type: 'emoji', emoji: '📦' },
         properties: {
           title: { title: [{ type: 'text', text: { content: `[백업 원문] ${pageQuery} (${dateStr})` } }] }
         },
-        children: oldBlocks.map(sanitizeBlockForCreate)
+        children: sanitizedOldBlocks.slice(0, 100)
       });
+      if (sanitizedOldBlocks.length > 100) {
+        await appendBlocksInBatches(backupPage.id, sanitizedOldBlocks.slice(100));
+      }
 
       // Delete old blocks and banner block from target page
       for (let i = 0; i <= bannerIndex; i++) {
@@ -336,10 +302,7 @@ Notion Agent CLI Usage:
       const targetPage = await findPageByTitle(pageQuery);
 
       const children = markdownToBlocks(markdownContent);
-      await notion.blocks.children.append({
-        block_id: targetPage.id,
-        children: children
-      });
+      await appendBlocksInBatches(targetPage.id, children);
 
       console.log(`SUCCESS: Appended content to "${pageQuery}"`);
     } else if (command === 'delete') {
@@ -379,8 +342,8 @@ Notion Agent CLI Usage:
 
       console.log(`DELETE_SUCCESS: Archived "${title}" and recorded it in Trash Archive (${trashEntry.url}).`);
     } else if (command === 'list-trash') {
-      const blocksRes = await notion.blocks.children.list({ block_id: TRASH_PAGE_ID, page_size: 100 });
-      const entries = blocksRes.results
+      const blocks = await listAllBlocks(TRASH_PAGE_ID);
+      const entries = blocks
         .filter(b => b.type === 'child_page')
         .map(b => ({ id: b.id, title: b.child_page.title, created_time: b.created_time }))
         .sort((a, b) => new Date(b.created_time) - new Date(a.created_time));
@@ -390,8 +353,8 @@ Notion Agent CLI Usage:
       const trashQuery = args[1];
       const entry = await findPageByTitle(trashQuery);
 
-      const blocksRes = await notion.blocks.children.list({ block_id: entry.id, page_size: 100 });
-      const refBlock = blocksRes.results.find(b =>
+      const blocks = await listAllBlocks(entry.id);
+      const refBlock = blocks.find(b =>
         b.type === 'paragraph' && blockText(b).startsWith(RESTORE_REF_PREFIX)
       );
 
@@ -408,8 +371,8 @@ Notion Agent CLI Usage:
     } else if (command === 'scan') {
       const pageQuery = args[1];
       const targetPage = await findPageByTitle(pageQuery);
-      const blocksRes = await notion.blocks.children.list({ block_id: targetPage.id, page_size: 100 });
-      const markdown = blocksToMarkdown(blocksRes.results);
+      const blocks = await listAllBlocks(targetPage.id);
+      const markdown = blocksToMarkdown(blocks);
 
       console.log(JSON.stringify({
         page: getPageTitle(targetPage),
@@ -419,8 +382,8 @@ Notion Agent CLI Usage:
     } else if (command === 'scan-images') {
       const pageQuery = args[1];
       const targetPage = await findPageByTitle(pageQuery);
-      const blocksRes = await notion.blocks.children.list({ block_id: targetPage.id, page_size: 100 });
-      const imageBlocks = blocksRes.results.filter(b => b.type === 'image');
+      const blocks = await listAllBlocks(targetPage.id);
+      const imageBlocks = blocks.filter(b => b.type === 'image');
 
       if (imageBlocks.length === 0) {
         console.log(JSON.stringify({ page: getPageTitle(targetPage), images: [] }, null, 2));
