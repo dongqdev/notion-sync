@@ -53,7 +53,18 @@ Notion과 연동하여 동기화 기능을 수행하기 위해서는 Notion API 
 
 ![API 토큰 및 기능 설정](images/notion_connection_setup2.png)
 
-### 3단계: 휴지통(Trash Archive) 페이지 ID 설정
+### 3단계: 페이지에 통합 연결하기 (콘텐츠 사용 권한)
+
+통합(Integration)을 만들었다고 워크스페이스의 모든 페이지에 자동으로 접근되는 게 아닙니다. AI가 읽거나 쓸 페이지마다 이 통합을 개별로 연결해줘야 합니다.
+
+1. 연결하려는 Notion 페이지를 열고 우측 상단 `•••` → `연결 추가(Add connections)` → 아까 만든 통합(예: `외부 API`)을 선택합니다.
+2. 이미 연결된 페이지들은 [Notion Developers Connections](https://app.notion.com/developers/connections) → 해당 통합 → **콘텐츠 사용 권한** 탭에서 한눈에 확인하고 관리할 수 있습니다.
+
+![콘텐츠 사용 권한 화면](images/notion_content_permission.png)
+
+여기 없는 페이지는 API로 찾을 수 없습니다 (`object_not_found` 에러의 가장 흔한 원인입니다).
+
+### 4단계: 휴지통(Trash Archive) 페이지 ID 설정
 
 "안전한 글수정"과 "삭제" 기능은 원문을 실수로 잃어버리지 않도록, 지우거나 덮어쓰기 전에 원본을 Notion 내의 별도 페이지에 백업해둡니다. 이 백업 위치로 쓸 페이지를 직접 만들고, 그 페이지의 ID를 알려줘야 합니다.
 
@@ -97,6 +108,26 @@ cd C:\Users\dongq\Documents\work_space\notion-sync
 npm start
 ```
 브라우저에서 `http://localhost:3001` 접속!
+
+---
+
+## 💬 사용 예시
+
+진짜 사용법은 웹 화면 클릭이 아니라, Claude Code 같은 에이전트에게 말로 시키는 겁니다. 에이전트가 `notion-cli`를 대신 실행합니다.
+
+```
+"회의록" 페이지 밑에 오늘 회의 내용 요약해서 새 페이지로 만들어줘
+
+"주간 보고서" 페이지 정리해줘. 핵심 요약이랑 액션 아이템만 뽑아서 추가해줘
+
+노션 휴지통에 뭐 들어있어?
+
+SAP Knowledge Graph 사전 학습 자료 생성해줘.
+```
+
+아래는 마지막 프롬프트로 실제 생성된 결과 페이지입니다.
+
+![SAP Knowledge Graph 사전 학습 자료 생성 결과](images/sap_knowledge_graph_result.png)
 
 ---
 
