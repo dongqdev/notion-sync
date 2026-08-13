@@ -9,7 +9,7 @@ export default function NotionSetupGuide({ onRefresh }) {
       </div>
       <div className="setup-alert-content">
         <div className="setup-alert-title">
-          Notion 워크스페이스("GS ITM") 페이지 연결 안내
+          Notion 워크스페이스 페이지 연결 안내
         </div>
         <div className="setup-alert-desc">
           Notion API 보안 정책상, AI가 읽거나 수정하기 위해선 사용자가 작성할 노션 페이지 또는 데이터베이스에 <strong>'외부 API'</strong> 봇 연결 권한을 부여해야 합니다.

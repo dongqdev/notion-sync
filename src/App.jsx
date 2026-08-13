@@ -31,7 +31,7 @@ export default function App() {
 
       if (statusData.success && statusData.user) {
         setIsConnected(true);
-        setBotInfo(statusData.user.bot?.owner?.workspace ? statusData.user.bot : { workspace_name: 'GS ITM' });
+        setBotInfo(statusData.user.bot?.owner?.workspace ? statusData.user.bot : { workspace_name: 'Notion Workspace' });
 
         // 2. Fetch pages
         const searchRes = await fetch('/api/search', {

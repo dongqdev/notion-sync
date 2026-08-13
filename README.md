@@ -19,12 +19,12 @@ Notion API Key를 환경 변수로 설정하여, Notion 문서를 AI로 자동 �
    - 정리 결과를 선택된 Notion 페이지 하단에 **직접 블록 추가(Append)**.
 
 3. **Notion 워크스페이스 탐색기 (Page Explorer)**
-   - GS ITM 워크스페이스 내 연결된 모든 페이지/DB 목록 검색 및 조회.
+   - 연결된 워크스페이스 내 모든 페이지/DB 목록 검색 및 조회.
    - Notion 웹페이지 직통 링크 및 실시간 블록 구조 미리보기.
 
 4. **API 연결 및 보안 가이드 (Security & Setup)**
    - API 토큰: `.env` 환경변수에 기본 적용 (`NOTION_API_KEY`)
-   - 워크스페이스 정보: **GS ITM** (Bot 이름: `외부 API`)
+   - Bot 이름: `외부 API`
    - Notion API 보안 정책에 따라, 노션 페이지 우측 상단 `•••` -> `Add connections (연결 추가)` -> `외부 API`를 클릭하여 페이지 권한을 연결할 수 있습니다.
 
 ---

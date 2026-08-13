@@ -12,11 +12,11 @@ export default function Header({ activeTab, setActiveTab, botInfo, isConnected, 
             {botInfo && (
               <span className="workspace-badge">
                 <span className="workspace-status"></span>
-                {botInfo.workspace_name || 'GS ITM'}
+                {botInfo.workspace_name || 'Notion Workspace'}
               </span>
             )}
           </div>
-          <div className="brand-subtitle">AI 문서 작성 & 기존 글 자동 정리</div>
+          <div className="brand-subtitle">AI 문서 작성 & 기존 글 자동 정리 · v1.0.0</div>
         </div>
       </div>
 
