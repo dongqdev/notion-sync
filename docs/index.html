@@ -524,7 +524,7 @@
     <div class="wrap">
       <div class="section-head reveal">
         <h2>무엇을 할 수 있나요</h2>
-        <p>세 가지 기능이 하나의 CLI와 웹 화면에 모여 있습니다.</p>
+        <p>세 가지 기능이 하나의 CLI에 모여 있습니다.</p>
       </div>
 
       <div class="feature-row reveal">
@@ -588,25 +588,22 @@
     <div class="wrap">
       <div class="section-head reveal">
         <h2>API 키와 원문은 항상 안전합니다</h2>
-        <p>서버가 왜 필요한지, 삭제가 왜 삭제가 아닌지 숨기지 않고 설명합니다.</p>
+        <p>키가 어디에 머무는지, 삭제가 왜 삭제가 아닌지 숨기지 않고 설명합니다.</p>
       </div>
 
       <div class="flow reveal">
-        <div class="flow-node">브라우저</div>
-        <div class="flow-arrow">-&gt;</div>
-        <div class="flow-node">로컬 서버 (포트 3001)</div>
+        <div class="flow-node">에이전트 (로컬 CLI)</div>
         <div class="flow-arrow">-&gt;</div>
         <div class="flow-node">Notion API</div>
       </div>
 
       <div class="two-col reveal">
         <div class="card">
-          <h3>왜 서버가 필요한가요</h3>
+          <h3>API 키는 로컬을 벗어나지 않습니다</h3>
           <p>
-            브라우저에서 Notion API를 직접 호출하면 API 키가 코드에 그대로
-            노출되고, Notion도 브라우저에서의 직접 호출(CORS)을 막아둡니다.
-            그래서 키는 서버의 .env에만 두고, 브라우저는 우리 서버에만 요청을
-            보냅니다.
+            notion-cli는 브라우저나 별도 서버 없이, 로컬 Node 프로세스가
+            .env의 NOTION_API_KEY로 Notion API를 직접 호출합니다. 키가
+            네트워크로 오가거나 어딘가에 노출될 경로 자체가 없습니다.
           </p>
         </div>
         <div class="card">
@@ -669,7 +666,7 @@
     <div class="wrap">
       <div class="section-head reveal">
         <h2>설치 방법</h2>
-        <p>Notion 통합 토큰을 발급받고, 로컬에서 서버와 웹 앱을 실행합니다.</p>
+        <p>Notion 통합 토큰을 발급받고, 로컬에 CLI를 설치합니다.</p>
       </div>
 
       <div class="steps reveal">
@@ -718,18 +715,16 @@
             <code>NOTION_TRASH_PAGE_ID=3b9813eb-7677-8101-a4c1-d67d707c9506</code>
             <p style="margin-top:16px;">완성된 .env 파일은 이렇게 생겼습니다.</p>
             <code>NOTION_API_KEY=ntn_xxxx...
-NOTION_TRASH_PAGE_ID=3b9813eb-7677-8101-a4c1-d67d707c9506
-PORT=3001
-VITE_API_BASE_URL=http://localhost:3001</code>
+NOTION_TRASH_PAGE_ID=3b9813eb-7677-8101-a4c1-d67d707c9506</code>
           </div>
         </div>
 
         <div class="step">
           <div class="step-num">5</div>
           <div>
-            <h3>서버와 웹 앱 실행</h3>
-            <p>백엔드와 프론트엔드를 각각 실행하고 브라우저에서 접속합니다.</p>
-            <code>npm start</code>
+            <h3>CLI 설치</h3>
+            <p>의존성을 설치하면 바로 <code>npm run notion &lt;command&gt;</code>로 쓸 수 있습니다.</p>
+            <code>npm install</code>
           </div>
         </div>
 

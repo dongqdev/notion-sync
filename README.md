@@ -1,31 +1,19 @@
-# 🚀 Notion AI Sync & Writing Studio
+# 🚀 Notion AI Sync CLI
 
-Notion API Key를 환경 변수로 설정하여, Notion 문서를 AI로 자동 작성하고 기존 글을 1-Click 요약 / 구조화 / 할 일(Action Items) 추출로 정리할 수 있는 웹 애플리케이션 및 백엔드 서비스입니다.
+Claude Code 같은 셸 명령을 실행할 수 있는 AI 에이전트가, 사용자의 자연어 요청에 따라 Notion 문서를 읽고 쓰고 정리하도록 만든 CLI 도구입니다. 글 작성/요약/마스킹 같은 실제 "AI" 작업은 이 CLI가 아니라 호출하는 에이전트 자신이 하고, CLI는 그 결과를 Notion API에 반영만 하는 실행기입니다.
 
 ---
 
 ## 🌟 주요 기능
 
-1. **AI Notion 신규 글 작성 (AI Notion Writer)**
-   - 주제/프롬프트를 입력하면 AI가 Notion 마크다운 형식(제목, 개요, 실행 계획, 체크리스트, 코드 블록, 콜아웃 등)으로 자동 구성합니다.
-   - 템플릿 프리셋 제공: 기술 명세서(Tech Spec), PRD, 회의록, 기술 블로그, 주간 보고서 등.
-   - 대상 Notion 상위 페이지/DB를 선택하여 **원클릭으로 Notion에 새 페이지 생성**.
+에이전트가 `notion-cli`를 통해 수행하는 6가지 작업입니다 (자세한 사용 흐름은 [`.agents/skills/notion-ai-tool/SKILL.md`](.agents/skills/notion-ai-tool/SKILL.md) 참고):
 
-2. **기존 Notion 글 AI 정리 (AI Page Organizer)**
-   - 연결된 Notion 페이지 선택 시 원문 블록 텍스트 자동 탐색.
-   - **1-Click 핵심 요약**: 길고 복잡한 글을 3줄 요약 + 핵심 키워드로 축약.
-   - **문단 구조화 & 가독성 정리**: 헤더(#, ##), 불렛 포인트, 콜아웃으로 문서 재구성.
-   - **Action Items 추출**: 본문에서 작업 항목을 찾아 Notion 체크리스트(`to_do` 블록)로 자동 추출.
-   - 정리 결과를 선택된 Notion 페이지 하단에 **직접 블록 추가(Append)**.
-
-3. **Notion 워크스페이스 탐색기 (Page Explorer)**
-   - 연결된 워크스페이스 내 모든 페이지/DB 목록 검색 및 조회.
-   - Notion 웹페이지 직통 링크 및 실시간 블록 구조 미리보기.
-
-4. **API 연결 및 보안 가이드 (Security & Setup)**
-   - API 토큰: `.env` 환경변수에 기본 적용 (`NOTION_API_KEY`)
-   - Bot 이름: `외부 API`
-   - Notion API 보안 정책에 따라, 노션 페이지 우측 상단 `•••` -> `Add connections (연결 추가)` -> `외부 API`를 클릭하여 페이지 권한을 연결할 수 있습니다.
+1. **원문 읽기 / 요약** — 페이지 내용을 마크다운으로 읽고, 에이전트가 직접 3줄 요약 + 키워드를 작성해 토글 블록으로 삽입.
+2. **글쓰기 (신규 페이지)** — 에이전트가 작성한 마크다운(헤더, 불릿, 체크리스트, 코드블록, 표, 토글, 콜아웃 등)을 지정한 상위 페이지 밑에 새 페이지로 생성.
+3. **안전한 글수정** — 원문은 그대로 두고 수정 제안 배너를 먼저 추가(`propose-edit`), 승인 시에만 원문을 휴지통에 백업하고 교체(`approve-edit`).
+4. **삭제 및 휴지통 관리** — 삭제는 항상 보관(archive) + 휴지통 기록이며 `restore`로 되돌릴 수 있음.
+5. **회사정보 마스킹** — 이메일/전화/IP/접속키워드/URL 등을 정규식으로 스캔(`scan`)하고, 이미지 속 텍스트는 OCR(`scan-images`)로 확인해 안전한 글수정 흐름으로 마스킹.
+6. **API 연결 및 보안 가이드** — API 토큰은 `.env`의 `NOTION_API_KEY`로 관리하며, Notion 페이지 우측 상단 `•••` → `Add connections` → 통합 이름을 클릭해 페이지별로 권한을 연결합니다.
 
 ---
 
@@ -86,28 +74,16 @@ Notion과 연동하여 동기화 기능을 수행하기 위해서는 Notion API 
 
 ---
 
-## 🤔 왜 백엔드 서버가 필요한가요?
+## 🛠️ 설치
 
-이 프로젝트는 단순히 API 키로 REST API를 호출하는 것뿐이지만, 브라우저(프론트엔드)에서 Notion API를 직접 호출할 수는 없어서 서버(`server/index.js`)가 중간에 필요합니다.
-
-- **API 키 노출 방지**: 브라우저 JS에서 직접 호출하면 API 키가 번들에 그대로 포함되어 개발자 도구로 누구나 탈취할 수 있습니다. 키는 서버의 `.env`에만 두고, 브라우저는 우리 서버에만 요청을 보냅니다.
-- **CORS 제한**: Notion API는 브라우저에서의 직접 호출(CORS)을 허용하지 않아, 프론트엔드 `fetch`로는 애초에 호출이 불가능합니다.
-
-즉 요청 흐름은 `브라우저 → 우리 서버(포트 3001) → Notion API` 이며, 마크다운→Notion 블록 변환 같은 로직도 서버에서 처리됩니다.
-
----
-
-## 🛠️ 실행 방법
-
-### 서버 및 웹 앱 실행 (포트 3001)
 ```bash
-# 디렉토리 이동
-cd C:\Users\dongq\Documents\work_space\notion-sync
-
-# 백엔드 및 통합 앱 실행
-npm start
+git clone <repo>
+cd notion-sync
+npm install
+cp .env.example .env   # NOTION_API_KEY, NOTION_TRASH_PAGE_ID 채우기
 ```
-브라우저에서 `http://localhost:3001` 접속!
+
+CLI는 Node에서 Notion SDK(`@notionhq/client`)를 직접 호출하는 단순 스크립트라 별도 서버 실행이 필요 없습니다. `npm run notion <command>`로 바로 쓰거나, `npm link` 후 어느 디렉토리에서든 `notion-cli <command>`로 쓸 수 있습니다.
 
 ---
 
@@ -158,10 +134,8 @@ SAP Knowledge Graph 사전 학습 자료 생성해줘.
 ---
 
 ## 📁 프로젝트 구조
-- `server/index.js`: Notion SDK 연동 Express 백엔드 API & AI 텍스트-노션 블록 변환 엔진
-- `src/App.jsx`: 메인 대시보드 UI
-- `src/components/Header.jsx`: 워크스페이스 연결 상태 표시 및 탭 전환
-- `src/components/NotionSetupGuide.jsx`: Notion 페이지 공유 가이드 카드
-- `src/components/AiWriterStudio.jsx`: AI 초안 생성 및 Notion 저장 스튜디오
-- `src/components/AiPageOrganizer.jsx`: 기존 글 읽기 및 AI 정리/추가 스튜디오
-- `src/components/PageExplorer.jsx`: 노션 페이지 목록 및 블록 탐색기
+- `cli/notion-cli.js`: 에이전트가 실행하는 CLI 본체 (search/get-content/create/append/propose-edit/approve-edit/delete/restore/scan 등)
+- `lib/markdown-to-blocks.js`: 마크다운 → Notion 블록 변환 로직
+- `.agents/skills/notion-ai-tool/SKILL.md`: 에이전트용 사용 가이드 (Claude Code 등이 프로젝트 스코프에서 읽음)
+- `scripts/link-skills.mjs`: `.agents/skills`를 `.claude/skills`, `.codex/skills`로 심볼릭 링크
+- `docs/index.html`: GitHub Pages 소개 페이지
