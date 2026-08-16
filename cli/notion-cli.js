@@ -328,17 +328,34 @@ Notion Agent CLI Usage:
       // Fetch all page blocks (paginated, so long articles aren't silently truncated)
       const blocks = await listAllBlocks(targetPage.id);
 
-      // Find banner index
-      const bannerIndex = blocks.findIndex(
-        (b) =>
+      // Find banner index(es). If propose-edit was called more than once without an
+      // approve-edit in between, the page has multiple banners - taking the first
+      // one (the old behavior) silently backs up only the true original and leaves
+      // the newer proposal's content sitting on the page looking like it's now the
+      // "original", so a later approve-edit would back that up as if it were the
+      // real original. Refuse instead of guessing, same as the title-matching helpers.
+      const bannerIndices = blocks
+        .map((b, i) =>
           b.type === 'callout' &&
-          b.callout?.rich_text?.[0]?.plain_text?.includes('[AI 수정 제안본]'),
-      );
+          b.callout?.rich_text?.[0]?.plain_text?.includes('[AI 수정 제안본]')
+            ? i
+            : -1,
+        )
+        .filter((i) => i !== -1);
 
-      if (bannerIndex === -1) {
+      if (bannerIndices.length === 0) {
         console.log(`NO_PROPOSAL_FOUND: No pending AI proposal banner found on "${pageQuery}".`);
         return;
       }
+      if (bannerIndices.length > 1) {
+        console.error(
+          `MULTIPLE_PROPOSALS_FOUND: "${pageQuery}" has ${bannerIndices.length} pending proposal banners. ` +
+            `approve-edit only handles exactly one - open the page and resolve the extra proposal(s) manually before retrying.`,
+        );
+        process.exitCode = 1;
+        return;
+      }
+      const bannerIndex = bannerIndices[0];
 
       // Old blocks are before bannerIndex
       const oldBlocks = blocks.slice(0, bannerIndex);
