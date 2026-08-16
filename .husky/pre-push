@@ -1,0 +1,9 @@
+set -e
+
+# 이 프로젝트엔 아직 자동화된 테스트 스위트가 없다. 최소한의 안전망으로 cli/, lib/,
+# scripts/의 모든 JS 파일 구문 오류만이라도 push 전에 걸러낸다.
+echo "==> 전체 구문 체크 (cli/, lib/, scripts/)"
+find cli lib scripts \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -n1 node --check
+
+echo "==> 포맷 확인 (전체)"
+npx prettier --check .

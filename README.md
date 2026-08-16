@@ -22,6 +22,7 @@ Claude Code 같은 셸 명령을 실행할 수 있는 AI 에이전트가, 사용
 Notion과 연동하여 동기화 기능을 수행하기 위해서는 Notion API 통합 토큰(API Key)이 필요합니다. 아래 순서에 따라 연결을 생성하고 키를 설정하세요.
 
 ### 1단계: 신규 연결 생성
+
 1. [Notion Developers Connections](https://app.notion.com/developers/connections) 페이지에 접속합니다.
 2. 우측 상단의 **`+ 신규 연결`** 버튼을 클릭합니다.
 3. **연결 이름**(예: `이동규님의 연결` 등)을 입력하고, 인증 방법에서 **`액세스 토큰`**을 선택한 뒤 **`연결 생성하기`**를 클릭합니다.
@@ -29,6 +30,7 @@ Notion과 연동하여 동기화 기능을 수행하기 위해서는 Notion API 
 ![신규 연결 설정](images/notion_connection_setup1.png)
 
 ### 2단계: API 통합 토큰 확인 및 권한 설정
+
 1. 생성된 연결 설정 페이지에서 **`액세스 토큰(API 통합 토큰)`** 값을 복사하여 로컬 프로젝트 루트의 `.env` 파일 내 `NOTION_API_KEY` 값으로 추가합니다.
    ```properties
    NOTION_API_KEY=ntn_xxxx...
@@ -112,6 +114,7 @@ SAP Knowledge Graph 사전 학습 자료 생성해줘.
 이 도구는 Notion 공개 API 위에서 동작해서, API 자체의 한계를 그대로 물려받습니다.
 
 ### 확실히 되는 것
+
 - 새 페이지/DB 항목 생성: 헤더, 불릿, 번호목록, 체크박스, 코드블록(mermaid 포함), 표, 토글, 구분선, 콜아웃까지 지원
 - 기존 페이지에 내용 추가(append). 100블록 넘는 긴 글도 자동으로 나눠서 처리
 - 페이지 전체 읽기, 검색, DB 항목 조회, 페이지 속성(제목/날짜/텍스트 등) 수정
@@ -119,6 +122,7 @@ SAP Knowledge Graph 사전 학습 자료 생성해줘.
 - 안전한 글수정: 수정 제안(propose-edit) → 승인 시 원문 자동 백업 후 교체(approve-edit)
 
 ### 절대 안 되는 것
+
 - 블록 순서 변경, 페이지를 다른 위치로 옮기기 — Notion API에 이 기능 자체가 없습니다
 - 완전 영구삭제 — API 설계상 보관(archive)만 가능합니다
 - 다른 통합에 페이지 공유 권한 부여 — Notion 화면에서 수동으로만 가능합니다
@@ -134,6 +138,7 @@ SAP Knowledge Graph 사전 학습 자료 생성해줘.
 ---
 
 ## 📁 프로젝트 구조
+
 - `cli/notion-cli.js`: 에이전트가 실행하는 CLI 본체 (search/get-content/create/append/propose-edit/approve-edit/delete/restore/scan 등)
 - `lib/markdown-to-blocks.js`: 마크다운 → Notion 블록 변환 로직
 - `.agents/skills/notion-ai-tool/SKILL.md`: 에이전트용 사용 가이드 (Claude Code 등이 프로젝트 스코프에서 읽음)

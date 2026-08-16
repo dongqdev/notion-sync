@@ -8,11 +8,22 @@
   },
   "scripts": {
     "notion": "node cli/notion-cli.js",
-    "link-skills": "node scripts/link-skills.mjs"
+    "link-skills": "node scripts/link-skills.mjs",
+    "prepare": "husky"
   },
   "dependencies": {
     "@notionhq/client": "^2.2.15",
     "dotenv": "^16.4.7",
     "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.9.6"
+  },
+  "lint-staged": {
+    "*": [
+      "prettier --write --ignore-unknown"
+    ]
   }
 }

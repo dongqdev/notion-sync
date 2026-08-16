@@ -1,42 +1,61 @@
 <title>Notion AI Studio - 노션 문서를 CLI로 쓰고 정리하기</title>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="프롬프트로 노션 문서를 쓰고, 기존 글을 정리하고, 실수로 지운 내용도 항상 복구할 수 있는 오픈소스 CLI 도구입니다." />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F172A'/%3E%3Ctext x='16' y='23' font-family='monospace' font-weight='700' font-size='18' fill='%2322C55E' text-anchor='middle'%3EN%3C/text%3E%3C/svg%3E" />
+<meta
+  name="description"
+  content="프롬프트로 노션 문서를 쓰고, 기존 글을 정리하고, 실수로 지운 내용도 항상 복구할 수 있는 오픈소스 CLI 도구입니다."
+/>
+<link
+  rel="icon"
+  href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F172A'/%3E%3Ctext x='16' y='23' font-family='monospace' font-weight='700' font-size='18' fill='%2322C55E' text-anchor='middle'%3EN%3C/text%3E%3C/svg%3E"
+/>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link
+  href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
 
 <style>
   :root {
-    --bg: #0F172A;
-    --bg-elevated: #1E293B;
-    --bg-muted: #272F42;
+    --bg: #0f172a;
+    --bg-elevated: #1e293b;
+    --bg-muted: #272f42;
     --border: #334155;
-    --fg: #F8FAFC;
-    --fg-muted: #94A3B8;
-    --accent: #22C55E;
-    --accent-fg: #052E16;
-    --warn: #F59E0B;
+    --fg: #f8fafc;
+    --fg-muted: #94a3b8;
+    --accent: #22c55e;
+    --accent-fg: #052e16;
+    --warn: #f59e0b;
     --warn-bg: rgba(245, 158, 11, 0.08);
     --radius: 16px;
     --max-w: 1200px;
   }
 
-  * { box-sizing: border-box; }
+  * {
+    box-sizing: border-box;
+  }
 
-  html { scroll-behavior: smooth; }
+  html {
+    scroll-behavior: smooth;
+  }
 
   body {
     margin: 0;
     background: var(--bg);
     color: var(--fg);
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family:
+      'Pretendard',
+      -apple-system,
+      BlinkMacSystemFont,
+      sans-serif;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
   }
 
-  .mono { font-family: 'JetBrains Mono', monospace; }
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
 
   .wrap {
     max-width: var(--max-w);
@@ -44,15 +63,22 @@
     padding: 0 24px;
   }
 
-  a { color: inherit; }
+  a {
+    color: inherit;
+  }
 
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     font-weight: 700;
     letter-spacing: -0.02em;
     margin: 0;
   }
 
-  p { color: var(--fg-muted); margin: 0; }
+  p {
+    color: var(--fg-muted);
+    margin: 0;
+  }
 
   /* Nav */
   header.site-nav {
@@ -115,7 +141,9 @@
     transition: color 0.2s ease;
   }
 
-  .nav-links a:hover { color: var(--fg); }
+  .nav-links a:hover {
+    color: var(--fg);
+  }
 
   .btn {
     display: inline-flex;
@@ -129,18 +157,25 @@
     text-decoration: none;
     white-space: nowrap;
     border: 1px solid transparent;
-    transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+    transition:
+      transform 0.15s ease,
+      background 0.2s ease,
+      border-color 0.2s ease;
     cursor: pointer;
   }
 
-  .btn:active { transform: scale(0.98); }
+  .btn:active {
+    transform: scale(0.98);
+  }
 
   .btn-accent {
     background: var(--accent);
     color: var(--accent-fg);
   }
 
-  .btn-accent:hover { background: #2FE070; }
+  .btn-accent:hover {
+    background: #2fe070;
+  }
 
   .btn-ghost {
     background: transparent;
@@ -148,7 +183,9 @@
     border-color: var(--border);
   }
 
-  .btn-ghost:hover { border-color: var(--fg-muted); }
+  .btn-ghost:hover {
+    border-color: var(--fg-muted);
+  }
 
   /* Hero */
   .hero {
@@ -187,7 +224,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
-    box-shadow: 0 24px 60px -24px rgba(0,0,0,0.55);
+    box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.55);
   }
 
   .terminal-bar {
@@ -212,21 +249,39 @@
     overflow-x: auto;
   }
 
-  .terminal-body .cmd { color: var(--fg); }
-  .terminal-body .cmd::before { content: "$ "; color: var(--accent); }
-  .terminal-body .out { color: var(--fg-muted); }
-  .terminal-body .ok { color: var(--accent); }
+  .terminal-body .cmd {
+    color: var(--fg);
+  }
+  .terminal-body .cmd::before {
+    content: '$ ';
+    color: var(--accent);
+  }
+  .terminal-body .out {
+    color: var(--fg-muted);
+  }
+  .terminal-body .ok {
+    color: var(--accent);
+  }
 
   /* Section shell */
-  section { padding: 96px 0; border-top: 1px solid var(--border); }
+  section {
+    padding: 96px 0;
+    border-top: 1px solid var(--border);
+  }
 
-  .section-head { max-width: 640px; margin-bottom: 56px; }
+  .section-head {
+    max-width: 640px;
+    margin-bottom: 56px;
+  }
 
   .section-head h2 {
     font-size: clamp(26px, 3vw, 36px);
   }
 
-  .section-head p { margin-top: 14px; font-size: 16px; }
+  .section-head p {
+    margin-top: 14px;
+    font-size: 16px;
+  }
 
   /* Feature rows */
   .feature-row {
@@ -236,13 +291,24 @@
     align-items: center;
   }
 
-  .feature-row + .feature-row { margin-top: 96px; }
+  .feature-row + .feature-row {
+    margin-top: 96px;
+  }
 
-  .feature-row.reverse .feature-text { order: 2; }
-  .feature-row.reverse .feature-visual { order: 1; }
+  .feature-row.reverse .feature-text {
+    order: 2;
+  }
+  .feature-row.reverse .feature-visual {
+    order: 1;
+  }
 
-  .feature-text h3 { font-size: 24px; }
-  .feature-text p { margin-top: 14px; font-size: 15.5px; }
+  .feature-text h3 {
+    font-size: 24px;
+  }
+  .feature-text p {
+    margin-top: 14px;
+    font-size: 15.5px;
+  }
 
   .panel {
     background: var(--bg-elevated);
@@ -259,9 +325,17 @@
     white-space: pre-wrap;
   }
 
-  .diff-old { color: #FCA5A5; background: rgba(239,68,68,0.08); }
-  .diff-new { color: #86EFAC; background: rgba(34,197,94,0.08); }
-  .diff-muted { color: var(--fg-muted); }
+  .diff-old {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.08);
+  }
+  .diff-new {
+    color: #86efac;
+    background: rgba(34, 197, 94, 0.08);
+  }
+  .diff-muted {
+    color: var(--fg-muted);
+  }
 
   .explorer-row {
     display: flex;
@@ -271,12 +345,20 @@
     font-size: 14px;
   }
 
-  .explorer-row + .explorer-row { border-top: 1px solid var(--border); }
+  .explorer-row + .explorer-row {
+    border-top: 1px solid var(--border);
+  }
 
-  .explorer-row .path { color: var(--fg-muted); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
+  .explorer-row .path {
+    color: var(--fg-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+  }
 
   /* Full width panel (explorer) */
-  .panel-wide { margin-top: 96px; }
+  .panel-wide {
+    margin-top: 96px;
+  }
 
   /* Trust / two-col */
   .two-col {
@@ -292,8 +374,13 @@
     padding: 28px;
   }
 
-  .two-col .card h3 { font-size: 18px; margin-bottom: 10px; }
-  .two-col .card p { font-size: 14.5px; }
+  .two-col .card h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  .two-col .card p {
+    font-size: 14.5px;
+  }
 
   .flow {
     display: flex;
@@ -312,7 +399,9 @@
     padding: 10px 14px;
   }
 
-  .flow-arrow { color: var(--fg-muted); }
+  .flow-arrow {
+    color: var(--fg-muted);
+  }
 
   /* Capability list */
   .cap-list {
@@ -339,8 +428,12 @@
     line-height: 1.6;
   }
 
-  .cap-yes .cap-mark { color: var(--accent); }
-  .cap-no .cap-mark { color: var(--warn); }
+  .cap-yes .cap-mark {
+    color: var(--accent);
+  }
+  .cap-no .cap-mark {
+    color: var(--warn);
+  }
 
   /* Warning panel */
   .warn-panel {
@@ -366,12 +459,25 @@
     gap: 8px;
   }
 
-  .warn-panel li { font-size: 14px; color: var(--fg-muted); }
-  .warn-panel p { font-size: 14px; color: var(--fg-muted); }
-  .warn-panel a { color: var(--fg); text-decoration: underline; }
+  .warn-panel li {
+    font-size: 14px;
+    color: var(--fg-muted);
+  }
+  .warn-panel p {
+    font-size: 14px;
+    color: var(--fg-muted);
+  }
+  .warn-panel a {
+    color: var(--fg);
+    text-decoration: underline;
+  }
 
   /* Steps */
-  .steps { display: flex; flex-direction: column; gap: 48px; }
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+  }
 
   .step {
     display: grid;
@@ -393,8 +499,13 @@
     color: var(--accent);
   }
 
-  .step h3 { font-size: 17px; margin-bottom: 8px; }
-  .step p { font-size: 14.5px; }
+  .step h3 {
+    font-size: 17px;
+    margin-bottom: 8px;
+  }
+  .step p {
+    font-size: 14.5px;
+  }
 
   .step code {
     display: block;
@@ -433,40 +544,74 @@
     gap: 16px;
   }
 
-  .footer-row p { font-size: 13.5px; }
+  .footer-row p {
+    font-size: 13.5px;
+  }
 
   /* Reveal */
   .reveal {
     opacity: 0;
     transform: translateY(18px);
-    transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1);
+    transition:
+      opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .reveal.is-visible { opacity: 1; transform: translateY(0); }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    .reveal { opacity: 1; transform: none; transition: none; }
-    html { scroll-behavior: auto; }
+    .reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    html {
+      scroll-behavior: auto;
+    }
   }
 
   @media (max-width: 860px) {
-    .hero-grid { grid-template-columns: 1fr; }
-    .feature-row, .feature-row.reverse { grid-template-columns: 1fr; }
+    .hero-grid {
+      grid-template-columns: 1fr;
+    }
+    .feature-row,
+    .feature-row.reverse {
+      grid-template-columns: 1fr;
+    }
     .feature-row.reverse .feature-text,
-    .feature-row.reverse .feature-visual { order: initial; }
-    .two-col { grid-template-columns: 1fr; }
+    .feature-row.reverse .feature-visual {
+      order: initial;
+    }
+    .two-col {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (max-width: 860px) and (min-width: 641px) {
-    .nav-links { gap: 14px; }
-    .nav-links a { font-size: 13px; }
+    .nav-links {
+      gap: 14px;
+    }
+    .nav-links a {
+      font-size: 13px;
+    }
   }
 
   @media (max-width: 640px) {
-    section { padding: 64px 0; }
-    .hero { padding: 48px 0 64px; }
-    .wrap { padding: 0 18px; }
-    .nav-links { display: none; }
+    section {
+      padding: 64px 0;
+    }
+    .hero {
+      padding: 48px 0 64px;
+    }
+    .wrap {
+      padding: 0 18px;
+    }
+    .nav-links {
+      display: none;
+    }
   }
 </style>
 
@@ -484,37 +629,48 @@
         <li><a href="#install">설치 방법</a></li>
       </ul>
     </nav>
-    <a class="btn btn-accent" href="https://github.com/dongqdev/notion-sync" target="_blank" rel="noopener">
+    <a
+      class="btn btn-accent"
+      href="https://github.com/dongqdev/notion-sync"
+      target="_blank"
+      rel="noopener"
+    >
       GitHub에서 보기
     </a>
   </div>
 </header>
 
 <main id="top">
-  <section class="hero" style="border-top: none;">
+  <section class="hero" style="border-top: none">
     <div class="wrap hero-grid">
       <div>
         <h1>노션 문서, AI로 쓰고 정리합니다</h1>
         <p class="lede">
-          프롬프트로 새 페이지를 쓰고, 기존 글을 요약해 정리하고, 실수로 지운 내용도
-          항상 복구할 수 있는 오픈소스 CLI 도구입니다.
+          프롬프트로 새 페이지를 쓰고, 기존 글을 요약해 정리하고, 실수로 지운 내용도 항상 복구할 수
+          있는 오픈소스 CLI 도구입니다.
         </p>
         <div class="hero-ctas">
-          <a class="btn btn-accent" href="https://github.com/dongqdev/notion-sync" target="_blank" rel="noopener">GitHub에서 보기</a>
+          <a
+            class="btn btn-accent"
+            href="https://github.com/dongqdev/notion-sync"
+            target="_blank"
+            rel="noopener"
+            >GitHub에서 보기</a
+          >
           <a class="btn btn-ghost" href="#install">설치 방법 보기</a>
         </div>
       </div>
       <div class="terminal reveal">
         <div class="terminal-bar" aria-hidden="true"><span></span><span></span><span></span></div>
         <div class="terminal-body">
-<div class="cmd">notion-cli create "프로젝트 문서" "8월 회의록" "..."</div>
-<div class="out ok">SUCCESS: Created "8월 회의록"</div>
-<div class="out">&nbsp;</div>
-<div class="cmd">notion-cli delete "8월 회의록"</div>
-<div class="out ok">DELETE_SUCCESS: Archived and recorded in Trash Archive</div>
-<div class="out">&nbsp;</div>
-<div class="cmd">notion-cli restore "8월 회의록"</div>
-<div class="out ok">RESTORE_SUCCESS: Restored</div>
+          <div class="cmd">notion-cli create "프로젝트 문서" "8월 회의록" "..."</div>
+          <div class="out ok">SUCCESS: Created "8월 회의록"</div>
+          <div class="out">&nbsp;</div>
+          <div class="cmd">notion-cli delete "8월 회의록"</div>
+          <div class="out ok">DELETE_SUCCESS: Archived and recorded in Trash Archive</div>
+          <div class="out">&nbsp;</div>
+          <div class="cmd">notion-cli restore "8월 회의록"</div>
+          <div class="out ok">RESTORE_SUCCESS: Restored</div>
         </div>
       </div>
     </div>
@@ -531,9 +687,9 @@
         <div class="feature-text">
           <h3>AI로 새 페이지 쓰기</h3>
           <p>
-            주제와 프롬프트를 입력하면 제목, 개요, 실행 계획, 체크리스트까지 갖춘 노션
-            문서를 자동으로 구성합니다. 기술 명세서, 회의록, 주간 보고서 같은 템플릿을
-            고를 수 있고, 완성되면 원하는 상위 페이지 밑에 바로 생성됩니다.
+            주제와 프롬프트를 입력하면 제목, 개요, 실행 계획, 체크리스트까지 갖춘 노션 문서를
+            자동으로 구성합니다. 기술 명세서, 회의록, 주간 보고서 같은 템플릿을 고를 수 있고,
+            완성되면 원하는 상위 페이지 밑에 바로 생성됩니다.
           </p>
         </div>
         <div class="feature-visual panel">
@@ -549,9 +705,8 @@
         <div class="feature-text">
           <h3>기존 글 AI 정리</h3>
           <p>
-            길고 복잡한 글을 3줄 요약과 핵심 키워드로 압축하고, 문단과 헤더를 다시
-            구조화합니다. 본문 속에 흩어진 작업 항목은 체크리스트로 뽑아내 페이지
-            하단에 그대로 추가합니다.
+            길고 복잡한 글을 3줄 요약과 핵심 키워드로 압축하고, 문단과 헤더를 다시 구조화합니다.
+            본문 속에 흩어진 작업 항목은 체크리스트로 뽑아내 페이지 하단에 그대로 추가합니다.
           </p>
         </div>
         <div class="feature-visual panel">
@@ -563,10 +718,10 @@
       </div>
 
       <div class="panel-wide panel reveal">
-        <h3 style="font-size:18px; margin-bottom:14px;">워크스페이스 탐색</h3>
-        <p style="font-size:14.5px; margin-bottom:18px;">
-          연결된 모든 페이지와 데이터베이스를 검색하고, 블록 구조를 미리 볼 수
-          있습니다. 노션 링크를 찾아 헤매지 않아도 됩니다.
+        <h3 style="font-size: 18px; margin-bottom: 14px">워크스페이스 탐색</h3>
+        <p style="font-size: 14.5px; margin-bottom: 18px">
+          연결된 모든 페이지와 데이터베이스를 검색하고, 블록 구조를 미리 볼 수 있습니다. 노션 링크를
+          찾아 헤매지 않아도 됩니다.
         </p>
         <div class="explorer-row">
           <span>휴지통 (Trash Archive)</span>
@@ -601,17 +756,17 @@
         <div class="card">
           <h3>API 키는 로컬을 벗어나지 않습니다</h3>
           <p>
-            notion-cli는 브라우저나 별도 서버 없이, 로컬 Node 프로세스가
-            .env의 NOTION_API_KEY로 Notion API를 직접 호출합니다. 키가
-            네트워크로 오가거나 어딘가에 노출될 경로 자체가 없습니다.
+            notion-cli는 브라우저나 별도 서버 없이, 로컬 Node 프로세스가 .env의 NOTION_API_KEY로
+            Notion API를 직접 호출합니다. 키가 네트워크로 오가거나 어딘가에 노출될 경로 자체가
+            없습니다.
           </p>
         </div>
         <div class="card">
           <h3>삭제는 진짜 삭제가 아닙니다</h3>
           <p>
-            Notion 공개 API에는 영구 삭제 기능이 없습니다. delete는 내부적으로
-            페이지를 보관(archive) 처리하고 휴지통 페이지에 원본 링크를
-            남길 뿐이라, restore 명령으로 언제든 되돌릴 수 있습니다.
+            Notion 공개 API에는 영구 삭제 기능이 없습니다. delete는 내부적으로 페이지를
+            보관(archive) 처리하고 휴지통 페이지에 원본 링크를 남길 뿐이라, restore 명령으로 언제든
+            되돌릴 수 있습니다.
           </p>
         </div>
       </div>
@@ -628,19 +783,44 @@
       <div class="two-col reveal">
         <div>
           <ul class="cap-list">
-            <li class="cap-yes"><span class="cap-mark">+</span> 새 페이지/DB 항목 생성 (헤더·불릿·번호목록·체크박스·코드+mermaid·표·토글·구분선·콜아웃)</li>
-            <li class="cap-yes"><span class="cap-mark">+</span> 기존 페이지에 내용 추가, 100블록 넘는 긴 글도 자동 배치 처리</li>
-            <li class="cap-yes"><span class="cap-mark">+</span> 페이지 전체 읽기, 검색, DB 항목 조회, 속성 수정</li>
-            <li class="cap-yes"><span class="cap-mark">+</span> 삭제 = 보관(archive) + 복구(restore), 항상 되돌릴 수 있음</li>
-            <li class="cap-yes"><span class="cap-mark">+</span> 안전한 글수정: 제안(propose-edit) → 원문 백업 후 교체(approve-edit)</li>
+            <li class="cap-yes">
+              <span class="cap-mark">+</span> 새 페이지/DB 항목 생성
+              (헤더·불릿·번호목록·체크박스·코드+mermaid·표·토글·구분선·콜아웃)
+            </li>
+            <li class="cap-yes">
+              <span class="cap-mark">+</span> 기존 페이지에 내용 추가, 100블록 넘는 긴 글도 자동
+              배치 처리
+            </li>
+            <li class="cap-yes">
+              <span class="cap-mark">+</span> 페이지 전체 읽기, 검색, DB 항목 조회, 속성 수정
+            </li>
+            <li class="cap-yes">
+              <span class="cap-mark">+</span> 삭제 = 보관(archive) + 복구(restore), 항상 되돌릴 수
+              있음
+            </li>
+            <li class="cap-yes">
+              <span class="cap-mark">+</span> 안전한 글수정: 제안(propose-edit) → 원문 백업 후
+              교체(approve-edit)
+            </li>
           </ul>
         </div>
         <div>
           <ul class="cap-list">
-            <li class="cap-no"><span class="cap-mark">-</span> 블록 순서 변경, 페이지를 다른 위치로 옮기기 (Notion API에 없는 기능)</li>
-            <li class="cap-no"><span class="cap-mark">-</span> 완전 영구삭제 (API 설계상 보관만 가능)</li>
-            <li class="cap-no"><span class="cap-mark">-</span> 다른 통합에 페이지 공유 권한 부여 (Notion 화면에서 수동으로만 가능)</li>
-            <li class="cap-no"><span class="cap-mark">-</span> 마크다운 링크·이미지 마크다운·4단계 이상 헤더·중첩 목록·취소선 (아직 미지원)</li>
+            <li class="cap-no">
+              <span class="cap-mark">-</span> 블록 순서 변경, 페이지를 다른 위치로 옮기기 (Notion
+              API에 없는 기능)
+            </li>
+            <li class="cap-no">
+              <span class="cap-mark">-</span> 완전 영구삭제 (API 설계상 보관만 가능)
+            </li>
+            <li class="cap-no">
+              <span class="cap-mark">-</span> 다른 통합에 페이지 공유 권한 부여 (Notion 화면에서
+              수동으로만 가능)
+            </li>
+            <li class="cap-no">
+              <span class="cap-mark">-</span> 마크다운 링크·이미지 마크다운·4단계 이상 헤더·중첩
+              목록·취소선 (아직 미지원)
+            </li>
           </ul>
         </div>
       </div>
@@ -648,15 +828,24 @@
       <div class="warn-panel reveal">
         <h3>주의사항: "정리" 요청 시 반드시 안전한 흐름을 거치세요</h3>
         <p>
-          과거에 approve-edit가 원문을 휴지통에 백업할 때 목록을 한 번만 조회하고 다음 페이지를
-          안 가져오는 버그가 있었습니다. 100블록이 넘는 긴 글을 정리하다가 백업이 일부만 된 채로
-          원문이 지워진 사례가 있었습니다. 지금은 고쳐서 실제 회의록으로 재검증까지 마쳤지만
-          (<a href="https://github.com/dongqdev/notion-sync/commit/8e97deb" target="_blank" rel="noopener">관련 수정</a>),
-          아래는 계속 지키는 걸 권장합니다.
+          과거에 approve-edit가 원문을 휴지통에 백업할 때 목록을 한 번만 조회하고 다음 페이지를 안
+          가져오는 버그가 있었습니다. 100블록이 넘는 긴 글을 정리하다가 백업이 일부만 된 채로 원문이
+          지워진 사례가 있었습니다. 지금은 고쳐서 실제 회의록으로 재검증까지 마쳤지만 (<a
+            href="https://github.com/dongqdev/notion-sync/commit/8e97deb"
+            target="_blank"
+            rel="noopener"
+            >관련 수정</a
+          >), 아래는 계속 지키는 걸 권장합니다.
         </p>
         <ul>
-          <li>원문을 직접 지우고 새로 쓰게 시키지 마세요. 항상 propose-edit → approve-edit 흐름을 거치면 원문이 백업된 뒤에만 교체됩니다.</li>
-          <li>approve-edit·delete 실행 후 나오는 "Trash Page" 링크를 열어, 실제로 백업이 들어갔는지 한 번은 확인하는 습관을 들이세요.</li>
+          <li>
+            원문을 직접 지우고 새로 쓰게 시키지 마세요. 항상 propose-edit → approve-edit 흐름을
+            거치면 원문이 백업된 뒤에만 교체됩니다.
+          </li>
+          <li>
+            approve-edit·delete 실행 후 나오는 "Trash Page" 링크를 열어, 실제로 백업이 들어갔는지 한
+            번은 확인하는 습관을 들이세요.
+          </li>
         </ul>
       </div>
     </div>
@@ -674,8 +863,14 @@
           <div class="step-num">1</div>
           <div>
             <h3>Notion 통합 생성</h3>
-            <p>Notion Developers Connections 페이지에서 새 연결을 만들고 액세스 토큰을 발급받습니다.</p>
-            <img src="images/notion_connection_setup1.png" alt="Notion 신규 연결 생성 화면" loading="lazy" />
+            <p>
+              Notion Developers Connections 페이지에서 새 연결을 만들고 액세스 토큰을 발급받습니다.
+            </p>
+            <img
+              src="images/notion_connection_setup1.png"
+              alt="Notion 신규 연결 생성 화면"
+              loading="lazy"
+            />
           </div>
         </div>
 
@@ -685,7 +880,11 @@
             <h3>API 토큰을 .env에 저장</h3>
             <p>발급받은 토큰과 필요한 권한(콘텐츠 읽기·업데이트·삽입)을 확인합니다.</p>
             <code>NOTION_API_KEY=ntn_xxxx...</code>
-            <img src="images/notion_connection_setup2.png" alt="API 토큰 및 권한 설정 화면" loading="lazy" />
+            <img
+              src="images/notion_connection_setup2.png"
+              alt="API 토큰 및 권한 설정 화면"
+              loading="lazy"
+            />
           </div>
         </div>
 
@@ -694,11 +893,15 @@
           <div>
             <h3>페이지에 통합 연결하기</h3>
             <p>
-              통합을 만들었다고 모든 페이지에 자동으로 접근되지 않습니다. AI가
-              읽거나 쓸 페이지마다 개별로 연결해야 하며, 연결 현황은 통합 설정의
-              콘텐츠 사용 권한 탭에서 한눈에 확인할 수 있습니다.
+              통합을 만들었다고 모든 페이지에 자동으로 접근되지 않습니다. AI가 읽거나 쓸 페이지마다
+              개별로 연결해야 하며, 연결 현황은 통합 설정의 콘텐츠 사용 권한 탭에서 한눈에 확인할 수
+              있습니다.
             </p>
-            <img src="images/notion_content_permission.png" alt="콘텐츠 사용 권한 화면" loading="lazy" />
+            <img
+              src="images/notion_content_permission.png"
+              alt="콘텐츠 사용 권한 화면"
+              loading="lazy"
+            />
           </div>
         </div>
 
@@ -707,15 +910,16 @@
           <div>
             <h3>휴지통 페이지 ID 설정 (필수)</h3>
             <p>
-              백업으로 쓸 페이지를 하나 만들고 같은 통합에 연결한 다음, 페이지
-              URL 끝에 붙은 32자리 ID를 복사합니다. 대시(-)는 있어도 없어도
-              상관없습니다. 이 값이 없으면 approve-edit·delete·list-trash는
-              API를 호출하지도 않고 바로 에러를 내고 종료합니다.
+              백업으로 쓸 페이지를 하나 만들고 같은 통합에 연결한 다음, 페이지 URL 끝에 붙은 32자리
+              ID를 복사합니다. 대시(-)는 있어도 없어도 상관없습니다. 이 값이 없으면
+              approve-edit·delete·list-trash는 API를 호출하지도 않고 바로 에러를 내고 종료합니다.
             </p>
             <code>NOTION_TRASH_PAGE_ID=3b9813eb-7677-8101-a4c1-d67d707c9506</code>
-            <p style="margin-top:16px;">완성된 .env 파일은 이렇게 생겼습니다.</p>
-            <code>NOTION_API_KEY=ntn_xxxx...
-NOTION_TRASH_PAGE_ID=3b9813eb-7677-8101-a4c1-d67d707c9506</code>
+            <p style="margin-top: 16px">완성된 .env 파일은 이렇게 생겼습니다.</p>
+            <code
+              >NOTION_API_KEY=ntn_xxxx...
+              NOTION_TRASH_PAGE_ID=3b9813eb-7677-8101-a4c1-d67d707c9506</code
+            >
           </div>
         </div>
 
@@ -723,7 +927,9 @@ NOTION_TRASH_PAGE_ID=3b9813eb-7677-8101-a4c1-d67d707c9506</code>
           <div class="step-num">5</div>
           <div>
             <h3>CLI 설치</h3>
-            <p>의존성을 설치하면 바로 <code>npm run notion &lt;command&gt;</code>로 쓸 수 있습니다.</p>
+            <p>
+              의존성을 설치하면 바로 <code>npm run notion &lt;command&gt;</code>로 쓸 수 있습니다.
+            </p>
             <code>npm install</code>
           </div>
         </div>
@@ -733,18 +939,20 @@ NOTION_TRASH_PAGE_ID=3b9813eb-7677-8101-a4c1-d67d707c9506</code>
           <div>
             <h3>에이전트에게 프롬프트로 시키기</h3>
             <p>
-              진짜 사용법은 웹 화면 클릭이 아니라, Claude Code 같은 에이전트에게
-              말로 시키는 겁니다. notion-cli는 에이전트가 대신 실행합니다.
+              진짜 사용법은 웹 화면 클릭이 아니라, Claude Code 같은 에이전트에게 말로 시키는 겁니다.
+              notion-cli는 에이전트가 대신 실행합니다.
             </p>
-            <code>"회의록" 페이지 밑에 오늘 회의 내용 요약해서 새 페이지로 만들어줘
-
-"주간 보고서" 페이지 정리해줘. 핵심 요약이랑 액션 아이템만 뽑아서 추가해줘
-
-노션 휴지통에 뭐 들어있어?
-
-SAP Knowledge Graph 사전 학습 자료 생성해줘.</code>
-            <p style="margin-top:16px;">마지막 프롬프트로 실제 생성된 결과 페이지입니다.</p>
-            <img src="images/sap_knowledge_graph_result.png" alt="SAP Knowledge Graph 사전 학습 자료 생성 결과" loading="lazy" />
+            <code
+              >"회의록" 페이지 밑에 오늘 회의 내용 요약해서 새 페이지로 만들어줘 "주간 보고서"
+              페이지 정리해줘. 핵심 요약이랑 액션 아이템만 뽑아서 추가해줘 노션 휴지통에 뭐
+              들어있어? SAP Knowledge Graph 사전 학습 자료 생성해줘.</code
+            >
+            <p style="margin-top: 16px">마지막 프롬프트로 실제 생성된 결과 페이지입니다.</p>
+            <img
+              src="images/sap_knowledge_graph_result.png"
+              alt="SAP Knowledge Graph 사전 학습 자료 생성 결과"
+              loading="lazy"
+            />
           </div>
         </div>
       </div>
@@ -755,25 +963,41 @@ SAP Knowledge Graph 사전 학습 자료 생성해줘.</code>
 <footer>
   <div class="wrap footer-row">
     <p>Notion AI Studio는 개인 워크스페이스용으로 만든 오픈소스 도구입니다.</p>
-    <a class="btn btn-ghost" href="https://github.com/dongqdev/notion-sync" target="_blank" rel="noopener">GitHub에서 보기</a>
+    <a
+      class="btn btn-ghost"
+      href="https://github.com/dongqdev/notion-sync"
+      target="_blank"
+      rel="noopener"
+      >GitHub에서 보기</a
+    >
   </div>
 </footer>
 
 <script>
   (function () {
     var els = document.querySelectorAll('.reveal');
-    if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      els.forEach(function (el) { el.classList.add('is-visible'); });
+    if (
+      !('IntersectionObserver' in window) ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      els.forEach(function (el) {
+        el.classList.add('is-visible');
+      });
       return;
     }
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible');
-          io.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.15 });
-    els.forEach(function (el) { io.observe(el); });
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 },
+    );
+    els.forEach(function (el) {
+      io.observe(el);
+    });
   })();
 </script>

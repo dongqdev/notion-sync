@@ -41,6 +41,7 @@ npm run notion scan-images <page_query>                           # 페이지 �
 ## 5대 핵심 기능 연동 가이드
 
 ### 1. 요약 (Summarization)
+
 - **요청 예시**: "OO 글 3줄 요약해줘", "핵심 내용 서머리 추가해줘"
 - **실행 절차**:
   1. `npm run notion get-content <page_query>` 로 원문을 읽는다.
@@ -48,6 +49,7 @@ npm run notion scan-images <page_query>                           # 페이지 �
   3. `npm run notion add-toggle <page_query> "📌 AI 요약" <summary_md>` 로 상단/하단에 삽입한다.
 
 ### 2. 글쓰기 (Document Writing)
+
 - **요청 예시**: "OO 페이지 밑에 OO 주제로 새 문서 만들어줘"
 - **실행 절차**:
   1. 대상 상위 페이지가 불명확하면 `npm run notion search <keyword>` 로 후보를 보여주고 사용자가 고르게 한다.
@@ -59,6 +61,7 @@ npm run notion scan-images <page_query>                           # 페이지 �
     "최상위에 만들어줘"라고 하면, 어느 공유 페이지를 부모로 쓸지 먼저 물어보세요.
 
 ### 3. 안전한 글수정 (Safe Document Editing)
+
 - **1단계: 수정본 제안** — 요청: "OO 페이지 내용 다듬어줘"
   - `npm run notion propose-edit <page_query> <revised_md>` — 원문은 그대로 두고 하단에
     `✨ [AI 수정 제안본]` 배너 + 수정본을 추가.
@@ -67,6 +70,7 @@ npm run notion scan-images <page_query>                           # 페이지 �
     휴지통의 새 백업 페이지로 복사하고, 대상 페이지에서는 원문+배너를 지워 수정본만 남긴다.
 
 ### 4. 삭제 (Delete)
+
 - **요청 예시**: "OO 페이지 삭제해줘", "OO 글 지워줘"
 - **실행 절차**: `npm run notion delete <page_query>`
   - Notion 공개 API는 페이지 영구삭제를 지원하지 않으므로, 내부적으로 (a) 원본 페이지를
@@ -75,6 +79,7 @@ npm run notion scan-images <page_query>                           # 페이지 �
     (엉뚱한 페이지를 지우지 않기 위한 안전장치). 이 경우 `search`로 먼저 정확한 제목을 확인하세요.
 
 ### 5. 휴지통 관리 (Trash)
+
 - **목록 조회**: `npm run notion list-trash` — 휴지통에 있는 항목(삭제 기록, 편집 백업)을
   최신순으로 보여준다.
 - **복원**: `npm run notion restore <trash_entry_query>` — `delete`로 만들어진 항목만 복원
@@ -82,6 +87,7 @@ npm run notion scan-images <page_query>                           # 페이지 �
   복원 대상이 아니며, 필요하면 그 내용을 `get-content`로 읽어 다시 `propose-edit` 하세요.
 
 ### 6. 회사정보 마스킹 (Redaction)
+
 - **요청 예시**: "이 페이지 회사정보 좀 가려줘", "민감정보 마스킹해줘"
 - **가리는 대상**: 담당자 개인정보(이름/이메일/연락처), 시스템·접속정보(서버주소/DB접속문자열/
   API키·토큰/내부 URL), 거래처·프로젝트명. (재무수치는 기본 범위 아님 — 사용자가 별도로 요청하면 포함)

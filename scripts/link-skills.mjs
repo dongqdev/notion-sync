@@ -10,10 +10,7 @@ import { fileURLToPath } from 'url';
 
 const repoRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const source = path.join(repoRoot, '.agents', 'skills');
-const targets = [
-  path.join(repoRoot, '.claude', 'skills'),
-  path.join(repoRoot, '.codex', 'skills'),
-];
+const targets = [path.join(repoRoot, '.claude', 'skills'), path.join(repoRoot, '.codex', 'skills')];
 
 if (!fs.existsSync(source)) {
   console.error(`Source not found: ${source}`);
