@@ -27,6 +27,14 @@ function requireTrashPageId() {
   }
 }
 
+// Backup/trash-record titles are built as "<label> <base title> (<date>)". If
+// the base title already ends in one of these date parens from a previous
+// backup/delete round, stripping it first keeps re-processing the same page
+// from stacking "(date) (date) (date)..." forever.
+function stripTrailingDateSuffix(title) {
+  return title.replace(/(\s*\(\d{4}-\d{2}-\d{2}\))+$/, '').trim();
+}
+
 function getPageTitle(page) {
   if (page.object === 'page') {
     const titleProp = Object.values(page.properties || {}).find(p => p.type === 'title');
@@ -68,24 +76,44 @@ async function findPageByTitle(query) {
   return match;
 }
 
-// Like findPageByTitle, but for destructive commands: refuses to silently fall
-// back to the top search hit when nothing actually matches the title, since a
-// wrong guess here means archiving the wrong page.
+// Like findPageByTitle, but for commands that mutate a page (create/append/
+// add-toggle/propose-edit/approve-edit/delete/restore): refuses to silently
+// fall back to the top search hit when nothing actually matches the title,
+// since a wrong guess here means writing to, archiving, or deleting content
+// on the wrong page.
+//
+// A plain "title contains query" check isn't enough on its own: this tool's
+// own naming conventions (e.g. a backup titled "[백업 원문] <title> (date)")
+// mean a page's exact title is very often also a *substring* of another
+// page's title. If more than one result contains the query, silently taking
+// the first one is exactly the kind of guess this function exists to refuse
+// (confirmed live: it once picked a "[백업 원문] ..." backup page over the
+// real target because both matched and the backup ranked first). So an exact,
+// case-insensitive title match always wins first; only when there's no exact
+// match do we fall back to "contains", and only if that's unambiguous.
 async function findPageByTitleExact(query) {
   const res = await notion.search({ query, page_size: 10 });
   if (!res.results || res.results.length === 0) {
     throw new Error(`Page matching "${query}" not found.`);
   }
-  const match = res.results.find(item =>
-    getPageTitle(item).toLowerCase().includes(query.toLowerCase())
-  );
-  if (!match) {
+  const q = query.trim().toLowerCase();
+  const exact = res.results.find(item => getPageTitle(item).trim().toLowerCase() === q);
+  if (exact) return exact;
+
+  const candidates = res.results.filter(item => getPageTitle(item).toLowerCase().includes(q));
+  if (candidates.length === 0) {
     throw new Error(
       `No page title actually contains "${query}" (closest search hit: "${getPageTitle(res.results[0])}"). ` +
       `Refusing to guess on a destructive command — run "search" first and pass the exact title.`
     );
   }
-  return match;
+  if (candidates.length > 1) {
+    throw new Error(
+      `Ambiguous: multiple page titles contain "${query}" (${candidates.map(getPageTitle).join(' | ')}). ` +
+      `Refusing to guess on a destructive command — pass the exact, full title.`
+    );
+  }
+  return candidates[0];
 }
 
 function blockText(block) {
@@ -200,7 +228,7 @@ Notion Agent CLI Usage:
         throw new Error('Usage: create <parent_page_query> <title> <content_markdown>');
       }
 
-      const parentPage = await findPageByTitle(parentQuery);
+      const parentPage = await findPageByTitleExact(parentQuery);
       const isDatabase = parentPage.object === 'database';
       const contentBlocks = markdownToBlocks(markdownContent);
       const newPage = await notion.pages.create({
@@ -221,7 +249,7 @@ Notion Agent CLI Usage:
       const toggleTitle = args[2];
       const markdownContent = args[3] || '';
 
-      const targetPage = await findPageByTitle(pageQuery);
+      const targetPage = await findPageByTitleExact(pageQuery);
 
       const toggleBlock = {
         children: [
@@ -245,7 +273,7 @@ Notion Agent CLI Usage:
     } else if (command === 'propose-edit') {
       const pageQuery = args[1];
       const revisedMarkdown = args[2] || '';
-      const targetPage = await findPageByTitle(pageQuery);
+      const targetPage = await findPageByTitleExact(pageQuery);
 
       const bannerBlock = {
         object: 'block',
@@ -263,7 +291,7 @@ Notion Agent CLI Usage:
     } else if (command === 'approve-edit') {
       requireTrashPageId();
       const pageQuery = args[1];
-      const targetPage = await findPageByTitle(pageQuery);
+      const targetPage = await findPageByTitleExact(pageQuery);
 
       // Fetch all page blocks (paginated, so long articles aren't silently truncated)
       const blocks = await listAllBlocks(targetPage.id);
@@ -282,6 +310,7 @@ Notion Agent CLI Usage:
       // Old blocks are before bannerIndex
       const oldBlocks = blocks.slice(0, bannerIndex);
       const dateStr = new Date().toISOString().split('T')[0];
+      const baseTitle = stripTrailingDateSuffix(getPageTitle(targetPage));
 
       // Backup old blocks to Trash page (content is copied in, not just a marker page).
       // Long articles can exceed Notion's 100-block-per-request cap, so the
@@ -292,7 +321,7 @@ Notion Agent CLI Usage:
         parent: { page_id: TRASH_PAGE_ID },
         icon: { type: 'emoji', emoji: '📦' },
         properties: {
-          title: { title: [{ type: 'text', text: { content: `[백업 원문] ${pageQuery} (${dateStr})` } }] }
+          title: { title: [{ type: 'text', text: { content: `[백업 원문] ${baseTitle} (${dateStr})` } }] }
         },
         children: sanitizedOldBlocks.slice(0, 100)
       });
@@ -300,20 +329,31 @@ Notion Agent CLI Usage:
         await appendBlocksInBatches(backupPage.id, sanitizedOldBlocks.slice(100));
       }
 
-      // Delete old blocks and banner block from target page
+      // Delete old blocks and banner block from target page. Only "already gone"
+      // is safe to ignore here - anything else (rate limit, permission, network)
+      // must be surfaced, since silently swallowing it would leave the original
+      // content sitting next to its own backup while claiming full success.
+      const deleteFailures = [];
       for (let i = 0; i <= bannerIndex; i++) {
         try {
           await notion.blocks.delete({ block_id: blocks[i].id });
         } catch (e) {
-          // ignore already deleted or system blocks
+          if (e.code !== 'object_not_found') {
+            deleteFailures.push({ blockId: blocks[i].id, message: e.message });
+          }
         }
       }
 
-      console.log(`APPROVED_EDIT_SUCCESS: Moved original content to Trash Page (${backupPage.url}) and updated "${pageQuery}".`);
+      if (deleteFailures.length > 0) {
+        console.error(`APPROVED_EDIT_PARTIAL: Backed up original to Trash Page (${backupPage.url}), but failed to remove ${deleteFailures.length} block(s) from "${pageQuery}" - the old content may still be visible there alongside the revision. Failures: ${JSON.stringify(deleteFailures)}`);
+        process.exitCode = 1;
+      } else {
+        console.log(`APPROVED_EDIT_SUCCESS: Moved original content to Trash Page (${backupPage.url}) and updated "${pageQuery}".`);
+      }
     } else if (command === 'append') {
       const pageQuery = args[1];
       const markdownContent = args[2] || '';
-      const targetPage = await findPageByTitle(pageQuery);
+      const targetPage = await findPageByTitleExact(pageQuery);
 
       const children = markdownToBlocks(markdownContent);
       await appendBlocksInBatches(targetPage.id, children);
@@ -325,6 +365,7 @@ Notion Agent CLI Usage:
       const targetPage = await findPageByTitleExact(pageQuery);
       const title = getPageTitle(targetPage);
       const dateStr = new Date().toISOString().split('T')[0];
+      const baseTitle = stripTrailingDateSuffix(title);
 
       // Notion's public API cannot permanently delete a page, only archive it.
       // So "delete" here means: archive the original (recoverable from Notion's
@@ -335,7 +376,7 @@ Notion Agent CLI Usage:
         parent: { page_id: TRASH_PAGE_ID },
         icon: { type: 'emoji', emoji: '🗑️' },
         properties: {
-          title: { title: [{ type: 'text', text: { content: `🗑️ ${title} (${dateStr})` } }] }
+          title: { title: [{ type: 'text', text: { content: `🗑️ ${baseTitle} (${dateStr})` } }] }
         },
         children: [
           {
@@ -367,7 +408,7 @@ Notion Agent CLI Usage:
       console.log(JSON.stringify(entries, null, 2));
     } else if (command === 'restore') {
       const trashQuery = args[1];
-      const entry = await findPageByTitle(trashQuery);
+      const entry = await findPageByTitleExact(trashQuery);
 
       const blocks = await listAllBlocks(entry.id);
       const refBlock = blocks.find(b =>
